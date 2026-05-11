@@ -10,7 +10,7 @@ Enterprise Retrieval-Augmented Generation (RAG) platform for insurance claims in
 
 ### FastAPI Backend
 
-![Swagger UI](outputs/figures/swagger_ui.pdf)
+![Swagger UI](outputs/figures/swagger_ui.png)
 
 ### System Architecture
 
