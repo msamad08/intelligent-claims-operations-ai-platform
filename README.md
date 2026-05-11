@@ -2,6 +2,19 @@
 
 Enterprise Retrieval-Augmented Generation (RAG) platform for insurance claims intelligence, SOP retrieval, incident response guidance, and operational decision support.
 
+## Platform Preview
+
+### Conversational RAG Interface
+
+![RAG Assistant](outputs/figures/rag_chat_interface.png)
+
+### FastAPI Backend
+
+![Swagger UI](outputs/figures/swagger_ui.pdf)
+
+### System Architecture
+
+![Architecture Diagram](outputs/figures/architecture_diagram.png)
 ---
 
 ## Live Features
