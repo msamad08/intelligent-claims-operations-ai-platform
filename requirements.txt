@@ -12,3 +12,11 @@ fastapi
 uvicorn
 openai
 langchain-ollama
+protobuf==3.20.3
+chromadb==0.4.24
+opentelemetry-api==1.27.0
+opentelemetry-sdk==1.27.0
+streamlit==1.45.1
+langchain==0.3.25
+langchain-community==0.3.24
+sentence-transformers==4.1.0
