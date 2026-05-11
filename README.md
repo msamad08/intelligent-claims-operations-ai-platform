@@ -24,6 +24,8 @@ Enterprise Retrieval-Augmented Generation (RAG) platform for insurance claims in
 * Semantic document retrieval
 * Vector database search using ChromaDB
 * Local embedding models using SentenceTransformers
+* Local LLM summarization using Ollama and Llama 3.2
+* Cost-free local RAG response generation
 * Claims intelligence workflows
 * Operational SOP retrieval
 * Incident response guidance
