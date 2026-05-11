@@ -1,0 +1,13 @@
+streamlit
+pandas
+numpy
+python-dotenv
+pypdf
+langchain
+langchain-community
+langchain-openai
+chromadb
+sentence-transformers
+fastapi
+uvicorn
+openai
