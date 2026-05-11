@@ -1,6 +1,7 @@
 from pathlib import Path
 from dotenv import load_dotenv
 import re
+from langchain_ollama import ChatOllama
 
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
@@ -62,15 +63,9 @@ def answer_question(query: str):
         clean_text(doc.page_content) for doc in docs
     ])
 
-    query_lower = query.lower()
-
     confidence = "High"
     escalation_required = "No"
     escalation_reason = ""
-
-    # ==========================
-    # Escalation Detection
-    # ==========================
 
     if (
         "mold" in combined_text.lower()
@@ -78,9 +73,8 @@ def answer_question(query: str):
         or "$25,000" in combined_text
         or "unclear policy" in combined_text.lower()
     ):
-
         escalation_required = "Yes"
-
+        confidence = "Medium"
         escalation_reason = """
 - Potential disputed coverage
 - Multiple carrier involvement
@@ -88,120 +82,48 @@ def answer_question(query: str):
 - Policy interpretation uncertainty
 """
 
-        confidence = "Medium"
+    context_preview = "\n\n".join([
+        clean_text(doc.page_content)[:1200]
+        for doc in docs
+    ])
 
-    # ==========================
-    # Claims Documentation
-    # ==========================
+    llm = ChatOllama(
+        model="llama3.2",
+        temperature=0.2
+    )
 
-    if "document" in query_lower or "claim" in query_lower:
+    prompt = f"""
+You are an enterprise claims and operations intelligence assistant.
 
-        answer = f"""
-### Required Documentation During Claims Processing
+Use ONLY the provided retrieved document context.
 
-Required documentation should include:
+Provide:
+1. Concise operational guidance
+2. Key documentation requirements
+3. Escalation recommendations
+4. Clear bullet points when appropriate
 
-- Customer contact information
-- Property address
-- Service category
-- Source or cause of loss
-- Time of incident
-- Initial safety concerns
-- Scope of work
-- Rooms affected
-- Equipment used
-- Emergency condition
-- Customer authorization
-- Time work began
+QUESTION:
+{query}
 
-### Escalation Guidance
-
-Claims should be escalated when:
-
-- Policy language is unclear
-- Multiple carriers are involved
-- Mold coverage is disputed
-- Customer authorization conflicts with carrier guidance
-- Estimated exposure exceeds $25,000
-
-### Operational Assessment
-
-- Confidence Level: {confidence}
-- Escalation Required: {escalation_required}
-
-This response is grounded in the uploaded documents.
-"""
-
-    # ==========================
-    # Storm / Incident Workflow
-    # ==========================
-
-    elif "storm" in query_lower or "incident" in query_lower:
-
-        answer = f"""
-### Storm Incident Documentation Requirements
-
-During a storm incident, teams should document:
-
-- Source or cause of loss
-- Property address
-- Time of incident
-- Rooms or areas affected
-- Structural or water-related damage
-- Initial safety concerns
-- Emergency mitigation actions
-- Equipment used
-- Customer authorization
-- Time mitigation work began
-
-### Operational Guidance
-
-If the incident involves severe damage, unclear coverage, disputed authorization, or high estimated exposure, it should be escalated to a claims specialist or supervisor.
-
-### Operational Assessment
-
-- Confidence Level: {confidence}
-- Escalation Required: {escalation_required}
-
-This response is grounded in the uploaded documents.
-"""
-
-    # ==========================
-    # Generic Retrieval
-    # ==========================
-
-    else:
-
-        context_preview = "\n\n".join([
-            clean_text(doc.page_content)[:500]
-            for doc in docs
-        ])
-
-        answer = f"""
-### Retrieved Guidance
-
-Based on the uploaded documents, the most relevant guidance is:
-
+DOCUMENT CONTEXT:
 {context_preview}
 
-### Recommended Next Step
+Provide a professional enterprise response.
+"""
 
-For high-risk claims, coverage disputes, unclear policy language, or operational uncertainty, escalate to a claims specialist or supervisor.
+    response = llm.invoke(prompt)
+
+    answer = f"""
+{response.content}
 
 ### Operational Assessment
 
 - Confidence Level: {confidence}
 - Escalation Required: {escalation_required}
-
-This response is grounded in the uploaded documents.
 """
 
-    # ==========================
-    # Escalation Reasoning
-    # ==========================
-
     if escalation_required == "Yes":
-
         answer += f"""
 
 ### Escalation Reasoning

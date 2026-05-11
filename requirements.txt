@@ -11,3 +11,4 @@ sentence-transformers
 fastapi
 uvicorn
 openai
+langchain-ollama
