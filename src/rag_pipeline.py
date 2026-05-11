@@ -115,16 +115,33 @@ DOCUMENT CONTEXT:
 Provide a professional enterprise response.
 """
 
-    response = llm.invoke(prompt)
+    try:
+        response = llm.invoke(prompt)
+        generated_answer = response.content
+
+    except Exception:
+        generated_answer = f"""
+    ### Retrieved Guidance
+
+    Based on the uploaded documents, the most relevant guidance is:
+
+    {context_preview[:1800]}
+
+    ### Recommended Next Step
+
+    For high-risk claims, coverage disputes, unclear policy language, or operational uncertainty, escalate to a claims specialist or supervisor.
+
+    Note: Local Ollama LLM was not available, so this response used retrieval-based fallback mode.
+    """
 
     answer = f"""
-{response.content}
+    {generated_answer}
 
-### Operational Assessment
+    ### Operational Assessment
 
-- Confidence Level: {confidence}
-- Escalation Required: {escalation_required}
-"""
+    - Confidence Level: {confidence}
+    - Escalation Required: {escalation_required}
+    """
 
     if escalation_required == "Yes":
         answer += f"""
