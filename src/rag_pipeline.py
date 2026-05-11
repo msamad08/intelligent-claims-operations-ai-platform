@@ -45,7 +45,7 @@ def clean_text(text: str) -> str:
     return text.strip()
 
 
-def answer_question(query: str):
+def answer_question(query: str, conversation_history: str = ""):
     docs = retrieve_documents(query)
 
     if not docs:
@@ -103,7 +103,10 @@ Provide:
 3. Escalation recommendations
 4. Clear bullet points when appropriate
 
-QUESTION:
+CONVERSATION HISTORY:
+{conversation_history}
+
+CURRENT QUESTION:
 {query}
 
 DOCUMENT CONTEXT:
@@ -131,7 +134,27 @@ Provide a professional enterprise response.
 {escalation_reason}
 """
 
+    evidence = []
+    seen_evidence = set()
+
+    for doc in docs:
+        source = doc.metadata.get("source", "Unknown")
+        text = clean_text(doc.page_content)[:350]
+
+        key = (source, text[:120])
+
+        if key not in seen_evidence:
+            evidence.append({
+                "source": source,
+                "text": text
+            })
+            seen_evidence.add(key)
+
+        if len(evidence) >= 3:
+            break
+
     return {
         "answer": answer,
-        "sources": sources
+        "sources": sources,
+        "evidence": evidence
     }

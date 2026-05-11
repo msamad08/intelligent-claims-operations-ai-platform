@@ -68,6 +68,7 @@ prompt = st.chat_input(
 )
 
 if prompt:
+
     st.session_state.messages.append({
         "role": "user",
         "content": prompt
@@ -76,20 +77,40 @@ if prompt:
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    result = answer_question(prompt)
+    with st.chat_message("assistant"):
+        with st.spinner("Searching documents and generating response..."):
+            conversation_history = ""
 
-    response_text = result["answer"]
+            for msg in st.session_state.messages[-6:]:
+                conversation_history += f"{msg['role']}: {msg['content']}\n"
 
-    if result["sources"]:
-        response_text += "\n\n### Sources\n"
+            result = answer_question(
+                query=prompt,
+                conversation_history=conversation_history
+    )
 
-        for source in result["sources"]:
-            response_text += f"- {source}\n"
+            response_text = result["answer"]
+
+            if result.get("sources"):
+                response_text += "\n\n### Sources\n"
+
+                for source in result["sources"]:
+                    response_text += f"- {source}\n"
+
+            if result.get("evidence"):
+                response_text += "\n\n### Supporting Evidence\n"
+
+                for item in result["evidence"]:
+                    response_text += f"""
+**Source:** {item['source']}
+
+> {item['text']}
+
+"""
+
+            st.markdown(response_text)
 
     st.session_state.messages.append({
         "role": "assistant",
         "content": response_text
     })
-
-    with st.chat_message("assistant"):
-        st.markdown(response_text)
