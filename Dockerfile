@@ -9,8 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN adduser --disabled-password --gecos "" appuser
-USER appuser
+RUN mkdir -p data/documents data/processed outputs/reports vectorstore
 
 EXPOSE 8501
 EXPOSE 8000
