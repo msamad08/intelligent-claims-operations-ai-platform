@@ -1,8 +1,8 @@
-# Intelligent Claims & Operations AI Platform
+﻿# Intelligent Claims & Operations AI Platform
 
 Enterprise Retrieval-Augmented Generation (RAG) platform for insurance claims intelligence, SOP retrieval, incident response guidance, and operational decision support.
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-brightgreen)](https://your-app.onrender.com)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-brightgreen)](https://intelligent-claims-operations-ai-platform.onrender.com)
 
 
 ## Platform Preview
@@ -43,23 +43,23 @@ Enterprise Retrieval-Augmented Generation (RAG) platform for insurance claims in
 
 ```text
 PDF Documents
-      ↓
+      â†“
 Document Ingestion Pipeline
-      ↓
+      â†“
 Text Chunking
-      ↓
+      â†“
 SentenceTransformer Embeddings
-      ↓
+      â†“
 Chroma Vector Database
-      ↓
+      â†“
 Semantic Retrieval Engine
-      ↓
+      â†“
 Operational Intelligence Layer
-      ↓
+      â†“
 Confidence Scoring + Escalation Logic
-      ↓
+      â†“
 FastAPI Backend
-      ↓
+      â†“
 Streamlit Conversational Interface
 ```
 
@@ -110,29 +110,29 @@ Streamlit Conversational Interface
 
 ```text
 intelligent-claims-operations-ai-platform/
-│
-├── data/
-│   ├── documents/
-│   └── processed/
-│
-├── outputs/
-│   ├── figures/
-│   └── reports/
-│
-├── src/
-│   ├── app.py
-│   ├── api.py
-│   ├── ingest_documents.py
-│   ├── rag_pipeline.py
-│   └── guardrails.py
-│
-├── vectorstore/
-├── requirements.txt
-├── Dockerfile
-├── start.sh
-├── .env.example
-├── .gitignore
-└── README.md
+â”‚
+â”œâ”€â”€ data/
+â”‚   â”œâ”€â”€ documents/
+â”‚   â””â”€â”€ processed/
+â”‚
+â”œâ”€â”€ outputs/
+â”‚   â”œâ”€â”€ figures/
+â”‚   â””â”€â”€ reports/
+â”‚
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ app.py
+â”‚   â”œâ”€â”€ api.py
+â”‚   â”œâ”€â”€ ingest_documents.py
+â”‚   â”œâ”€â”€ rag_pipeline.py
+â”‚   â””â”€â”€ guardrails.py
+â”‚
+â”œâ”€â”€ vectorstore/
+â”œâ”€â”€ requirements.txt
+â”œâ”€â”€ Dockerfile
+â”œâ”€â”€ start.sh
+â”œâ”€â”€ .env.example
+â”œâ”€â”€ .gitignore
+â””â”€â”€ README.md
 ```
 
 ---
