@@ -1,4 +1,4 @@
-# Core
+﻿# Core
 python-dotenv==1.0.1
 
 # LangChain
@@ -11,7 +11,7 @@ langchain-ollama==0.3.2
 sentence-transformers==4.1.0
 
 # Vector Database
-chromadb==0.4.24
+chromadb==0.6.3
 
 # PDF
 pypdf==5.4.0
@@ -22,6 +22,3 @@ uvicorn==0.34.2
 
 # Frontend
 streamlit==1.45.1
-
-# Protobuf (chromadb 0.4.24 compatibility)
-protobuf==3.20.3
