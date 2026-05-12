@@ -1,6 +1,9 @@
-# Intelligent Claims & Operations AI Assistant
+# Intelligent Claims & Operations AI Platform
 
 Enterprise Retrieval-Augmented Generation (RAG) platform for insurance claims intelligence, SOP retrieval, incident response guidance, and operational decision support.
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-brightgreen)](https://your-app.onrender.com)
+
 
 ## Platform Preview
 
@@ -74,6 +77,8 @@ Streamlit Conversational Interface
 * Retrieval-Augmented Generation (RAG)
 * Vector Search
 * HuggingFace Embeddings
+* Ollama / Llama 3.2
+* OpenAI GPT-3.5 Turbo
 
 ### Backend / APIs
 
@@ -96,6 +101,7 @@ Streamlit Conversational Interface
 ### Deployment
 
 * Docker
+* Render
 * GitHub
 
 ---
@@ -123,63 +129,68 @@ intelligent-claims-operations-ai-platform/
 ├── vectorstore/
 ├── requirements.txt
 ├── Dockerfile
+├── start.sh
+├── .env.example
 ├── .gitignore
 └── README.md
 ```
 
 ---
+## Ollama Setup (Local Only)
 
-## Key Features
+Required if running locally without an OpenAI API key.
 
-### Document Intelligence
+Install Ollama from [https://ollama.com](https://ollama.com)
 
-The platform supports:
+Then pull and serve the model:
 
-* Insurance policy analysis
-* Claims workflow retrieval
-* SOP intelligence
-* Incident response guidance
-* Operational documentation search
-* Source-grounded AI responses
-
-### Conversational AI Interface
-
-The Streamlit frontend provides:
-
-* ChatGPT-style conversational interaction
-* Source attribution
-* Operational recommendations
-* Confidence assessment
-* Escalation guidance
-
-### Confidence & Escalation Logic
-
-The system includes enterprise-style workflow logic for:
-
-* Coverage uncertainty detection
-* High-risk claims escalation
-* Multiple carrier involvement
-* Mold dispute escalation
-* High financial exposure detection
+```bash
+ollama pull llama3.2
+ollama serve
+```
 
 ---
+## Environment Configuration
 
-## Example Questions
+Copy `.env.example` to `.env` before running:
 
-```text
-What documentation is required during insurance claims processing?
+#### Windows PowerShell
+
+```powershell
+Copy-Item ".env.example" ".env"
 ```
 
-```text
-What operational steps should be taken during severe storm incidents?
+#### macOS / Linux
+
+```bash
+cp .env.example .env
 ```
 
-```text
-When should claims be escalated to a supervisor?
+Then open `.env` and fill in your values:
+
+```env
+# Option 1: OpenAI (cloud deployment)
+OPENAI_API_KEY=your-openai-key-here
+
+# Option 2: Local Ollama (leave OPENAI_API_KEY blank)
+OLLAMA_HOST=http://localhost:11434
 ```
 
-```text
-What information must be documented before emergency mitigation begins?
+> The app automatically uses OpenAI if `OPENAI_API_KEY` is set, otherwise falls back to Ollama.
+
+---
+## Quickstart
+
+1. Complete Ollama setup above (local) or set `OPENAI_API_KEY` in `.env` (cloud)
+2. Clone the repo and install dependencies
+3. Place PDF documents into `data/documents/`
+4. Run ingestion:
+```bash
+python src/ingest_documents.py
+```
+5. Start the app:
+```bash
+python -m streamlit run src/app.py
 ```
 
 ---
@@ -198,14 +209,19 @@ cd intelligent-claims-operations-ai-platform
 ```bash
 python -m venv .venv
 ```
-
 ### Activate Environment
 
 #### Windows PowerShell
 
-```bash
+```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .venv\Scripts\Activate.ps1
+```
+
+#### macOS / Linux
+
+```bash
+source .venv/bin/activate
 ```
 
 ### Install Dependencies
@@ -223,10 +239,7 @@ python -m streamlit run src/app.py
 ```
 
 Then open:
-
-```text
 http://localhost:8501
-```
 
 ---
 
@@ -237,20 +250,14 @@ python -m uvicorn src.api:app --reload
 ```
 
 Swagger UI:
-
-```text
 http://127.0.0.1:8000/docs
-```
 
 ---
 
 ## PDF Ingestion Workflow
 
 Place PDF documents into:
-
-```text
 data/documents/
-```
 
 Then run:
 
@@ -279,8 +286,23 @@ docker build -t intelligent-claims-ai .
 ### Run Docker Container
 
 ```bash
-docker run -p 8501:8501 intelligent-claims-ai
+docker run -p 8501:8501 -p 8000:8000 intelligent-claims-ai
 ```
+
+> **Note:** Ollama must be running on your host machine before starting the container.
+> The container connects to it via `host.docker.internal:11434`.
+> For cloud deployment, set `OPENAI_API_KEY` as an environment variable instead.
+
+---
+
+## Example Questions
+What documentation is required during insurance claims processing?
+
+What operational steps should be taken during severe storm incidents?
+
+When should claims be escalated to a supervisor?
+
+What information must be documented before emergency mitigation begins?
 
 ---
 
@@ -301,12 +323,10 @@ docker run -p 8501:8501 intelligent-claims-ai
 
 Planned future improvements include:
 
-* LLM-generated summarization
 * Authentication and role-based access
 * Citation highlighting
 * Multi-document reasoning
 * Hybrid BM25 + vector retrieval
-* Cloud deployment
 * CI/CD automation
 * Conversation memory
 * Agentic workflow orchestration
@@ -336,4 +356,5 @@ This project demonstrates:
 Mohammad Samad
 Data Scientist | AI & Operational Intelligence | Predictive Analytics | Operations Research
 
-GitHub: https://github.com/msamad08
+GitHub: [https://github.com/msamad08]
+

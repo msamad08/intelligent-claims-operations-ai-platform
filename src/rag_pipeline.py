@@ -1,41 +1,70 @@
 from pathlib import Path
 from dotenv import load_dotenv
+import os
 import re
-from langchain_ollama import ChatOllama
 
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
+
+from guardrails import evaluate, format_escalation_reasons
 
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 VECTOR_DIR = BASE_DIR / "vectorstore"
+EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+
+# Module-level cache
+_vectorstore = None
+_llm = None
 
 
-def load_vectorstore():
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
+def get_llm():
+    global _llm
 
-    return Chroma(
+    if _llm is not None:
+        return _llm
+
+    openai_key = os.getenv("OPENAI_API_KEY")
+
+    if openai_key:
+        from langchain_openai import ChatOpenAI
+        _llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.2)
+    else:
+        from langchain_ollama import ChatOllama
+        _llm = ChatOllama(model="llama3.2", temperature=0.2)
+
+    return _llm
+
+
+def get_vectorstore():
+    global _vectorstore
+
+    if _vectorstore is not None:
+        return _vectorstore
+
+    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+
+    _vectorstore = Chroma(
         persist_directory=str(VECTOR_DIR),
         embedding_function=embeddings
     )
 
+    return _vectorstore
+
 
 def retrieve_documents(query: str, k: int = 4):
-    vectorstore = load_vectorstore()
+    vectorstore = get_vectorstore()
     docs = vectorstore.similarity_search(query, k=k)
     return docs
 
 
 def clean_text(text: str) -> str:
 
-    # remove excessive whitespace/newlines
+    # Remove excessive whitespace/newlines
     text = re.sub(r"\s+", " ", text)
 
-    # remove weird spaced letters like:
-    # c r i t i c a l
+    # Remove weird spaced letters like: c r i t i c a l
     text = re.sub(
         r'(?:(?<=\s)|^)(?:[A-Za-z]\s){3,}[A-Za-z](?=\s|$)',
         lambda m: m.group(0).replace(" ", ""),
@@ -46,12 +75,21 @@ def clean_text(text: str) -> str:
 
 
 def answer_question(query: str, conversation_history: str = ""):
-    docs = retrieve_documents(query)
+
+    try:
+        docs = retrieve_documents(query)
+    except Exception as e:
+        return {
+            "answer": f"Could not access the knowledge base. Please ensure documents have been ingested first.\n\nError: {e}",
+            "sources": [],
+            "evidence": []
+        }
 
     if not docs:
         return {
             "answer": "I could not find relevant information in the uploaded documents.",
-            "sources": []
+            "sources": [],
+            "evidence": []
         }
 
     sources = list({
@@ -63,34 +101,18 @@ def answer_question(query: str, conversation_history: str = ""):
         clean_text(doc.page_content) for doc in docs
     ])
 
-    confidence = "High"
-    escalation_required = "No"
-    escalation_reason = ""
-
-    if (
-        "mold" in combined_text.lower()
-        or "multiple carriers" in combined_text.lower()
-        or "$25,000" in combined_text
-        or "unclear policy" in combined_text.lower()
-    ):
-        escalation_required = "Yes"
-        confidence = "Medium"
-        escalation_reason = """
-- Potential disputed coverage
-- Multiple carrier involvement
-- High estimated financial exposure
-- Policy interpretation uncertainty
-"""
+    # Guardrails — escalation logic
+    escalation = evaluate(combined_text)
+    confidence = escalation.confidence
+    escalation_required = "Yes" if escalation.escalation_required else "No"
+    escalation_reason = format_escalation_reasons(escalation)
 
     context_preview = "\n\n".join([
         clean_text(doc.page_content)[:1200]
         for doc in docs
     ])
 
-    llm = ChatOllama(
-        model="llama3.2",
-        temperature=0.2
-    )
+    llm = get_llm()
 
     prompt = f"""
 You are an enterprise claims and operations intelligence assistant.
@@ -119,33 +141,33 @@ Provide a professional enterprise response.
         response = llm.invoke(prompt)
         generated_answer = response.content
 
-    except Exception:
+    except Exception as e:
         generated_answer = f"""
-    ### Retrieved Guidance
+### Retrieved Guidance
 
-    Based on the uploaded documents, the most relevant guidance is:
+Based on the uploaded documents, the most relevant guidance is:
 
-    {context_preview[:1800]}
+{context_preview[:1800]}
 
-    ### Recommended Next Step
+### Recommended Next Step
 
-    For high-risk claims, coverage disputes, unclear policy language, or operational uncertainty, escalate to a claims specialist or supervisor.
+For high-risk claims, coverage disputes, unclear policy language, or operational uncertainty,
+escalate to a claims specialist or supervisor.
 
-    Note: Local Ollama LLM was not available, so this response used retrieval-based fallback mode.
-    """
+Note: LLM was not available ({e}), so this response used retrieval-based fallback mode.
+"""
 
     answer = f"""
-    {generated_answer}
+{generated_answer}
 
-    ### Operational Assessment
+### Operational Assessment
 
-    - Confidence Level: {confidence}
-    - Escalation Required: {escalation_required}
-    """
+- Confidence Level: {confidence}
+- Escalation Required: {escalation_required}
+"""
 
     if escalation_required == "Yes":
         answer += f"""
-
 ### Escalation Reasoning
 
 {escalation_reason}
@@ -157,7 +179,6 @@ Provide a professional enterprise response.
     for doc in docs:
         source = doc.metadata.get("source", "Unknown")
         text = clean_text(doc.page_content)[:350]
-
         key = (source, text[:120])
 
         if key not in seen_evidence:

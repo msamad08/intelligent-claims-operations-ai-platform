@@ -1,6 +1,5 @@
 import streamlit as st
 from pathlib import Path
-import subprocess
 import sys
 
 from rag_pipeline import answer_question
@@ -22,7 +21,7 @@ incident response guidance, and operational document retrieval.
 """)
 
 # ==========================
-# PDF Upload Section
+# Sidebar — Document Management
 # ==========================
 
 with st.sidebar:
@@ -41,16 +40,16 @@ with st.sidebar:
             with open(file_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
 
-        st.success("PDF(s) uploaded successfully.")
+        st.success(f"{len(uploaded_files)} PDF(s) uploaded successfully.")
 
     if st.button("Rebuild Knowledge Base"):
         with st.spinner("Rebuilding vector database..."):
-            subprocess.run(
-                [sys.executable, str(BASE_DIR / "src" / "ingest_documents.py")],
-                check=True
-            )
-
-        st.success("Knowledge base rebuilt successfully.")
+            try:
+                from ingest_documents import main as rebuild_index
+                rebuild_index()
+                st.success("Knowledge base rebuilt successfully.")
+            except Exception as e:
+                st.error(f"Failed to rebuild knowledge base: {e}")
 
 # ==========================
 # Chat Session State
@@ -79,38 +78,43 @@ if prompt:
 
     with st.chat_message("assistant"):
         with st.spinner("Searching documents and generating response..."):
-            conversation_history = ""
 
+            # Build conversation history from last 6 messages
+            # Store only role + content, not evidence, to avoid context bloat
+            conversation_history = ""
             for msg in st.session_state.messages[-6:]:
                 conversation_history += f"{msg['role']}: {msg['content']}\n"
 
-            result = answer_question(
-                query=prompt,
-                conversation_history=conversation_history
-    )
+            try:
+                result = answer_question(
+                    query=prompt,
+                    conversation_history=conversation_history
+                )
 
-            response_text = result["answer"]
+                response_text = result["answer"]
 
-            if result.get("sources"):
-                response_text += "\n\n### Sources\n"
+                if result.get("sources"):
+                    response_text += "\n\n### Sources\n"
+                    for source in result["sources"]:
+                        response_text += f"- {source}\n"
 
-                for source in result["sources"]:
-                    response_text += f"- {source}\n"
-
-            if result.get("evidence"):
-                response_text += "\n\n### Supporting Evidence\n"
-
-                for item in result["evidence"]:
-                    response_text += f"""
+                if result.get("evidence"):
+                    response_text += "\n\n### Supporting Evidence\n"
+                    for item in result["evidence"]:
+                        response_text += f"""
 **Source:** {item['source']}
 
 > {item['text']}
 
 """
 
+            except Exception as e:
+                response_text = f"An error occurred while generating a response: {e}"
+
             st.markdown(response_text)
 
+    # Store answer only — no evidence in history to avoid context bloat
     st.session_state.messages.append({
         "role": "assistant",
-        "content": response_text
+        "content": result["answer"]
     })

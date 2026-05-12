@@ -1,7 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from src.rag_pipeline import answer_question
+from rag_pipeline import answer_question
 
 app = FastAPI(
     title="Intelligent Claims & Operations AI API",
@@ -31,7 +31,19 @@ def health_check():
 @app.post("/ask")
 def ask_question(request: QueryRequest):
 
-    result = answer_question(request.question)
+    if not request.question.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Question cannot be empty."
+        )
+
+    try:
+        result = answer_question(request.question)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to process question: {e}"
+        )
 
     return {
         "question": request.question,

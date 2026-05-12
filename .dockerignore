@@ -5,3 +5,25 @@ __pycache__/
 .git/
 vectorstore/
 data/processed/
+
+# No need to ship these to the image
+.gitignore
+.dockerignore
+README.md
+outputs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+
+# Testing
+.pytest_cache/
+.coverage
+
+# Build
+dist/
+*.egg-info/

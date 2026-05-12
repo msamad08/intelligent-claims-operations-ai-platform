@@ -7,3 +7,23 @@ vectorstore/
 data/processed/
 .DS_Store
 .vscode/
+
+# Generated outputs
+outputs/reports/
+
+# Logs
+*.log
+
+# Testing
+.pytest_cache/
+.coverage
+
+# Build / packaging
+dist/
+*.egg-info/
+
+# Jupyter (if ever used)
+.ipynb_checkpoints/
+
+# OS
+Thumbs.db
